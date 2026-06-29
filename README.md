@@ -1,92 +1,41 @@
-# CUE-DETR
 
-[📜Paper](https://www.arxiv.org/abs/2407.06823) | [🤗Dataset](https://huggingface.co/datasets/disco-eth/edm-cue) | [🤗Checkpoints](https://huggingface.co/disco-eth/cue-detr/tree/main)
+# DeepMIR DJ Transition: 預測 Cue Point (Inference)
 
-## Dataset
+這是一個自動預測 DJ 混音 Cue In / Cue Out 接歌點的模型。
 
-[🤗Dataset](https://huggingface.co/datasets/disco-eth/edm-cue)
-
-***EDM-CUE*** contains metadata for almost 5k EDM tracks collected from 4 different DJs. No audio provided, only references to training data.
-
-<details>
-<summary> Track Metadata </summary>
-
-```python
-{
-    'id': int,
-    'title': str,
-    'artists': str,
-    'duration': int,        # in seconds
-    'genre': [str],
-    'key': [str],           # alphanumeric (Camelot)
-    'beat_grid': {
-        'start_pos': float, # in seconds
-        'init_beat': int,   #  first beat count
-        'bpm': float,
-        'time_sig': str
-    },
-    'cue_pts': [float]      # in seconds
-}
-```
-</details>
-
-#### Training Format
-
-* CUE-DETR expects training data in a ***modified COCO format***: instead of `'bbox'` and `'area'` the model requires the `'position'` of each cue point annotation. The bounding box is computed during runtime with default width 21 pixels.
-
-* `preprocessing.py` converts audio into power spectrograms including the annotation file in the custom COCO format.
-
-<details>
-<summary> Custom COCO Format </summary>
-
-```python
-data = {
-    'images' : [{
-        'id': img_id,
-        'width': int,
-        'height': int,
-        'file_name' : filename,
-    }]
-    'annotations': [{
-        'id': annotation_id,
-        'image_id': img_id,
-        'category_id': 0,
-        'position': int # cue position instead of bounding box
-    }],
-    'categories': [{
-        'id': 0,
-        'name': 'cue',
-        'supercategory' : 'cue'
-    }]
-}
-```
-</details>
-
-
-## Training
-
-Uses W&B for logging. Connect to W&B account by running `wandb login` in the console and passing the projectname and account as arguments for training.
-
-See `cue_detr_train.py`, `cue_detr_data.py` and `cue_detr_model.py` in `model` directory.
-
-
-## Dependencies
-
-Python 3.11.9, see `requirements.txt`.
-
-
-## Usage / Example Script
-
-[🤗Checkpoints](https://huggingface.co/disco-eth/cue-detr/tree/main)
-
-The example script `cue_points.py` calculates cue points for tracks stored in an audio directory. All calculated cue points will be written to `_cue_points.txt` which is added to the audio directory. It is also possible to run the script with a local checkpoint from a checkpoint directory. Note that as of now only mp3 files are supported.
+## 1. 環境設定
 
 ```bash
-python cue_points.py -t path/to/audio/dir
-# Optional arguments:
-# -c (path/to/local/checkpoint/dir)
-# -s (prediction sensitivity)
-# -r (min distance between cues)
-# -p (toggle to print cue points)
+pip install -r requirements.txt
+
 ```
 
+## 2. 下載模型權重
+
+
+```text
+checkpoints/exp_afternoon_demo_0/last.ckpt
+
+```
+
+## 3. 執行預測
+
+此腳本為 Demo 模式，會直接讀取 `train_images/` 內的預設圖片 (`mix0000-00`) 進行預測。
+
+請在終端機執行以下指令：
+
+```bash
+python predict_transition.py
+
+```
+
+## 4. 預期輸出
+
+執行成功後，終端機會印出模型分析結果，並提供給 Generative Model 團隊的 Action Item，包含：
+
+* **Track A** 建議的 Fade Out 絕對時間 (秒)
+* **Track B** 建議的 Fade In 絕對時間 (秒)
+
+```
+
+```
