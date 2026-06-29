@@ -1,5 +1,5 @@
 
-# DeepMIR DJ Transition: 預測 Cue Point (Inference)
+# Transition DETR
 
 這是一個自動預測 DJ 混音 Cue In / Cue Out 接歌點的模型。
 
