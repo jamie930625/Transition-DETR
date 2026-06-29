@@ -34,10 +34,10 @@ python predict_transition.py
 
 ## 4. 預期輸出
 
-執行成功後，終端機會印出模型分析結果，並提供給 Generative Model 團隊的 Action Item，包含：
+執行成功後，終端機會印出分析結果，可用於後續的 Generative Model，包含：
 
-* **Track A** 建議的 Fade Out 絕對時間 (秒)
-* **Track B** 建議的 Fade In 絕對時間 (秒)
+* **Track A** 建議的 cue Out 絕對時間 (秒)
+* **Track B** 建議的 cue In 絕對時間 (秒)
 
 ```
 
