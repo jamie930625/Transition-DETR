@@ -12,7 +12,9 @@ pip install -r requirements.txt
 
 ## 2. 下載模型權重
 
-
+請至以下連結下載模型權重 last.ckpt：
+(稍等
+下載後，請在專案根目錄建立對應資料夾，並將檔案放入，確保路徑結構如下：
 ```text
 checkpoints/exp_afternoon_demo_0/last.ckpt
 
