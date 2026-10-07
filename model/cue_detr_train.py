@@ -39,7 +39,7 @@ def train_cue_points(args):
     detr_config = None
     if args.bb_pt or args.no_pt:
         detr_config = DetrConfig(
-            num_labels=2, # 🚀 [核心修改] 這裡改成 2 類別
+            num_labels=2,  # cue-in, cue-out
             num_queries=args.num_queries,
             use_pretrained_backbone=args.bb_pt,
             auxiliary_loss=args.auxiliary_loss,
@@ -134,18 +134,18 @@ def setup_logger(args):
 
 def get_checkpoint_dir(args):
     dir = f'{args.checkpoint_dir}{args.run_name}/'
-    os.makedirs(dir, exist_ok=True) # 🚀 修正：防止多卡訓練時創建資料夾衝突
+    os.makedirs(dir, exist_ok=True)
     return dir
 
 
 def setup_callbacks(args, data_module):
     callbacks = []
     
-    # 🚀 [核心修改] 救援 Meeting 的無情存檔機器
+    # save a checkpoint every 500 steps
     checkpoint_callback = ModelCheckpoint(
-        save_top_k=-1,                 # 保留所有歷史存檔
-        save_last=True,                # 隨時更新 latest
-        every_n_train_steps=500,       # 每 500 步強制吐出一個 .ckpt 裝備
+        save_top_k=-1,
+        save_last=True,
+        every_n_train_steps=500,
         dirpath=get_checkpoint_dir(args),
         filename="demo-step-{step:06d}",
         )
@@ -194,7 +194,7 @@ if __name__ == '__main__':
     parser.add_argument('--epochs', default=10, type=int)
     parser.add_argument('--grad_clip', default=0.1, type=float)
     parser.add_argument('--batch_size', default=128, type=int)
-    parser.add_argument('--gpus', default=4, type=int) # 🚀 [核心修改] 預設改為 4，解放你的 3090 算力！
+    parser.add_argument('--gpus', default=1, type=int)
 
     # Directories & Storage
     parser.add_argument('--image_dir', type=str, required=True, help='Directory containing training images.')

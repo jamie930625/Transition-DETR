@@ -23,7 +23,7 @@ class CuePointDetr(pl.LightningModule):
         elif 'detr_checkpoint' in kwargs and kwargs['detr_checkpoint'] is not None:
             self.model = DetrForObjectDetection.from_pretrained(
                 kwargs['detr_checkpoint'],
-                num_labels=2,  # 🚀 [核心修改] 這裡改成 2 (0: Cue In, 1: Cue Out)
+                num_labels=2,  # 0: cue-in, 1: cue-out
                 ignore_mismatched_sizes=True,
                 )
         assert self.model is not None, 'Model initialization failed.'
@@ -105,11 +105,11 @@ class CuePredictionLogger(Callback):
         with torch.no_grad():
             outputs = pl_module(pixel_values=pixel_values, labels=labels)
 
-        # 🚀 [核心修改] 取得預測的類別與分數
+        # predicted classes and scores
         prob = nn.functional.softmax(outputs.logits, -1)
         scores, pred_labels = prob[..., :-1].max(-1) 
         
-        # 取前 3 個最有信心的預測即可 (避免畫面太亂)
+        # keep the 3 most confident predictions
         scores, idx = scores.topk(3)
         idx = torch.flatten(idx).tolist()
         
@@ -120,25 +120,23 @@ class CuePredictionLogger(Callback):
         # draw on image
         image = self.image.copy()
         
-        # 先畫出正確答案 Ground Truth (白色框)
-        # 注意：如果原版 draw_image_with_boxes 不支援 box_color 參數，這裡的傳參可能會被忽略，
-        # 但我們維持 Python 的 kwargs 彈性傳入。
+        # ground-truth boxes in white
         try:
             image = draw_image_with_boxes(image, gt_boxes, box_color='white')
         except TypeError:
             image = draw_image_with_boxes(image, gt_boxes)
         
-        # 🚀 [核心修改] 將預測框依據類別分色畫出
+        # predicted boxes, colored by class
         boxes_cue_in = pd_boxes[pd_labels == 0]
         boxes_cue_out = pd_boxes[pd_labels == 1]
         
         try:
             if len(boxes_cue_in) > 0:
-                image = draw_image_with_boxes(image, boxes_cue_in, box_color='green') # 類別 0 (Cue In) 畫綠色
+                image = draw_image_with_boxes(image, boxes_cue_in, box_color='green')
             if len(boxes_cue_out) > 0:
-                image = draw_image_with_boxes(image, boxes_cue_out, box_color='cyan') # 類別 1 (Cue Out) 畫青藍色
+                image = draw_image_with_boxes(image, boxes_cue_out, box_color='cyan')
         except TypeError:
-            # 防呆機制：若原始 utils 不支援分色，退回預設畫法
+            # fall back to the default color
             if len(boxes_cue_in) > 0:
                 image = draw_image_with_boxes(image, boxes_cue_in)
             if len(boxes_cue_out) > 0:

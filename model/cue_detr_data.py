@@ -126,8 +126,8 @@ class CueTrainDataset(Dataset):
             return pixel_values, target
         
         except AssertionError as e:
-            # 防呆機制：如果遇到圖片太短導致 assert 報錯，直接霸氣印出警告並抓下一筆！
-            print(f"⚠️ 跳過異常長度的邊角資料 idx {idx}: {e}")
+            # Some clips near track boundaries are shorter than the window; skip them.
+            print(f"Skipping sample {idx}: {e}")
             return self.__getitem__((idx + 1) % len(self))
     
     def set_reuse_slice(self, val):

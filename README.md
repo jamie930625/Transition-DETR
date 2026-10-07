@@ -1,44 +1,58 @@
+# Transition-DETR (early prototype)
 
-# Transition DETR
+Cue-point detection for DJ transitions with a DETR-style detector on mel-spectrograms.
 
-這是一個自動預測 DJ 混音 Cue In / Cue Out 接歌點的模型。
+Given a clip of the outgoing track (Track A) and a clip of the incoming track (Track B), the model predicts where Track A should be mixed out (cue-out) and where Track B should be mixed in (cue-in).
 
-## 1. 環境設定
+> **Status:** this repository contains the inference code from an early stage of the project (NTU Deep Learning for Music Analysis and Generation, final project). The current version of Transition-DETR, which detects variable-length transition regions on full-track spectrograms, is being prepared for publication and is not included here.
+
+## How it works
+
+- Each track is rendered as a mel-spectrogram image (sr = 22050 Hz, hop length = 512, so one pixel ≈ 23 ms).
+- The training data are pairs of clips (outgoing and incoming track) cut around real DJ transitions, with cue positions taken from track-to-mix alignments of real DJ mixes.
+- A DETR detector, fine-tuned from [CUE-DETR](https://github.com/ETH-DISCO/cue-detr), predicts cue points as narrow boxes with two classes: cue-in and cue-out.
+- At inference, a 355-pixel window (about 8 s) slides over each clip, and the most confident cue-out on Track A and cue-in on Track B are reported.
+
+## Repository structure
+
+```text
+predict_transition.py      # demo: predict cue-out / cue-in on a pair of clips
+examples/                  # one example pair of spectrogram clips
+model/
+  cue_detr_model.py        # LightningModule wrapping DetrForObjectDetection
+  cue_detr_data.py         # datasets and data module
+  cue_detr_train.py        # training script
+  cue_detr_pred.py         # batch prediction helper
+  cue_detr_utils.py        # slicing, box conversion, plotting
+  LICENSE-CUE-DETR         # license of the upstream CUE-DETR code
+```
+
+## Setup
 
 ```bash
 pip install -r requirements.txt
-
 ```
 
-## 2. 下載模型權重
+Download the checkpoint `last.ckpt` from [Google Drive](https://drive.google.com/file/d/17DKCkQ9pK9i2O29O4VpIQgwyuz4R0dkA/view?usp=share_link) and place it at:
 
-請至以下連結下載模型權重 last.ckpt：
-https://drive.google.com/file/d/17DKCkQ9pK9i2O29O4VpIQgwyuz4R0dkA/view?usp=share_link
-
-下載後，請在專案根目錄建立對應資料夾，並將檔案放入，確保路徑結構如下：
 ```text
 checkpoints/exp_afternoon_demo_0/last.ckpt
-
 ```
 
-## 3. 執行預測
-
-此腳本為 Demo 模式，會直接讀取 `train_images/` 內的預設圖片 (`mix0000-00`) 進行預測。
-
-請在終端機執行以下指令：
+## Run the demo
 
 ```bash
 python predict_transition.py
-
 ```
 
-## 4. 預期輸出
+Use your own clips:
 
-執行成功後，終端機會印出分析結果，可用於後續的 Generative Model，包含：
-
-* **Track A** 建議的 cue Out 絕對時間 (秒)
-* **Track B** 建議的 cue In 絕對時間 (秒)
-
+```bash
+python predict_transition.py --prev path/to/trackA.png --next path/to/trackB.png --ckpt path/to/last.ckpt
 ```
 
-```
+The script prints the predicted cue-out (Track A) and cue-in (Track B) in seconds from the start of each clip, with the detector's confidence.
+
+## Acknowledgements
+
+The model and training code build on [CUE-DETR](https://github.com/ETH-DISCO/cue-detr) (MIT License, Copyright (c) 2024 ETH DISCO), adapted here for two-class cue detection on track pairs.
